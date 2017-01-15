@@ -53,6 +53,9 @@ SHOWMAP=${SHOWMAP:-}
 # Show the current speed / temp. Leave empty to disable.
 SHOWCURRENT=${SHOWCURRENT:-}
 
+# Set the LED brightness in percentage (assuming your card has LED's). Can be a number between 0 and 100. Leave empty to keep the default brightness.
+LEDPERCENT=${LEDPERCENT:-0}
+
 # Set fan speed to this speed if GPU temperature under TEMP[0]
 MINSPEED=0
 
@@ -170,6 +173,11 @@ fi
 if [[ $MCLOCK ]]; then
     echo "Setting GPU memory offset to $MCLOCK."
     nvidia-settings --assign [gpu:$GPUID]/GPUMemoryTransferRateOffset[$PSTATE]=$MCLOCK 1> /dev/null
+fi
+
+if [[ $LEDPERCENT ]] && [[ $LEDPERCENT -ge 0 ]] && [[ $LEDPERCENT -le 100 ]]; then
+    echo "Setting LED brightness to $LEDPERCENT percent."
+    nvidia-settings --assign [gpu:$GPUID]/GPULogoBrightness=$LEDPERCENT 1> /dev/null
 fi
 
 if [[ $INTERVAL ]]; then
