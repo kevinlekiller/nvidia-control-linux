@@ -79,9 +79,6 @@ SPEED[3]=100
 SAFESPEED=${SPEED[1]}
 
 ############################################################################################
-function round() {
-    echo "$1" | awk '{print int($1+0.5)}'
-}
 declare -A PAIRS
 for PAIR in 0:1 1:2 2:3; do
     LOW=$(echo "$PAIR" | cut -d: -f1)
@@ -89,12 +86,13 @@ for PAIR in 0:1 1:2 2:3; do
     TDIFF0=$(bc -l <<< "$((${SPEED[$HIGH]} - ${SPEED[$LOW]})) / $((${TEMP[$HIGH]} - ${TEMP[$LOW]}))")
     CURSPEED=${SPEED[$LOW]}
     for i in $(seq ${TEMP[$LOW]} ${TEMP[$HIGH]}); do
-        if [[ $(round $CURSPEED) -le ${SPEED[$LOW]} ]]; then
+        RNDSPEED=$(echo $CURSPEED | awk '{print int($1+0.5)}')
+        if [[ $RNDSPEED -le ${SPEED[$LOW]} ]]; then
             PAIRS[$i]=${SPEED[$LOW]}
-        elif [[ $(round $CURSPEED) -ge ${SPEED[$HIGH]} ]]; then
+        elif [[ $RNDSPEED -ge ${SPEED[$HIGH]} ]]; then
             PAIRS[$i]=${SPEED[$HIGH]}
         else
-            PAIRS[$i]=$(round $CURSPEED)
+            PAIRS[$i]=$RNDSPEED
         fi
         CURSPEED=$(bc -l <<< "$TDIFF0 + $CURSPEED")
     done
