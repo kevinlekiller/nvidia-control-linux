@@ -193,9 +193,12 @@ if [[ $INTERVAL ]]; then
             SPEED=$SAFESPEED
         fi
         if [[ $SHOWCURRENT ]]; then
-            echo "Current Temp: $CTEMP Speed: $SPEED"
+            echo -ne "\033[2KCurrent Temp: $CTEMP Speed: $SPEED\r"
         fi
         nvidia-settings --assign [gpu:$GPUID]/GPUFanControlState=1 --assign [fan:$GPUID]/GPUTargetFanSpeed=$SPEED 1> /dev/null
         sleep $INTERVAL
     done
+    if [[ $SHOWCURRENT ]]; then
+        echo
+    fi
 fi
