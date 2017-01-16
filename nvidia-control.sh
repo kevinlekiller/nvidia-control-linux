@@ -22,23 +22,25 @@ LICENSE
 # You can set most of these settings from the command line, like this for example : GPU=1 POWER=60 INTERVAL=3.0 ./nvidia-control.sh
 # To make a value empty, set it like this for example: POWER=${POWER:-}
 # To set a negative number, set it like this for example: GCLOCK=${GCLOCK:--30}
+# nvidia-smi require root acces for some commands, to bypass this you can make nvidia-smi not require your password:
+# sudo echo "$USER ALL = NOPASSWD: /usr/bin/nvidia-smi" >> /etc/sudoers
 
 # Which GPU to use. find with nvidia-smi -L
 GPUID=${GPUID:-0}
 
 # Set the GPU in its highest P-State. Leave empty to disable.
-POWERMIZER=${POWERMIZER:-1}
+POWERMIZER=${POWERMIZER:-}
 
 # Set the power limit of the GPU. Leave empty to disable.
-POWER=${POWER:-57}
+POWER=${POWER:-}
 
 # Set the GPU clock speed offset in MHz (can be a negative number). Leave empty to disable.
 # For example, if your GPU is 1000MHz and you set this to 50, your GPU will be 1050MHz.
-GCLOCK=${GCLOCK:-220}
+GCLOCK=${GCLOCK:-}
 
 # Set the memory clock speed offset in MHz (can be a negative number). Leave empty to disable.
 # For example, if your memory is 2000MHz and you set this to -100, your memory will be 1900MHz.
-MCLOCK=${MCLOCK:--300}
+MCLOCK=${MCLOCK:-}
 
 # Which P-State to work on for the GPU / memory clock speed offset, 3 is the highest on modern Nvidia GPUs.
 # Usually only the highest P-State can be changed. You can find the perf levels for your card with: nvidia-settings -q GPUPerfModes
@@ -54,7 +56,7 @@ SHOWMAP=${SHOWMAP:-}
 SHOWCURRENT=${SHOWCURRENT:-}
 
 # Set the LED brightness in percentage (assuming your card has LED's). Can be a number between 0 and 100. Leave empty to keep the default brightness.
-LEDPERCENT=${LEDPERCENT:-0}
+LEDPERCENT=${LEDPERCENT:-}
 
 # Set fan speed to this speed if GPU temperature under TEMP[0]
 MINSPEED=0
@@ -62,15 +64,15 @@ MINSPEED=0
 # What fan speed to set at what temperature, for example set the fan speed at 25% when GPU temp is 50 degrees.
 # All other values are calculated on the fly, pass the SHOWMAP=true environment variable to show the calculated values.
 TEMP[0]=50
-SPEED[0]=34
+SPEED[0]=25
 
 TEMP[1]=60
-SPEED[1]=42
+SPEED[1]=50
 
-TEMP[2]=75
+TEMP[2]=70
 SPEED[2]=75
 
-TEMP[3]=90
+TEMP[3]=80
 SPEED[3]=100
 
 # This is in case there's some kind of logic flaw in the while loop. Can be left as is.
@@ -98,7 +100,7 @@ for PAIR in 0:1 1:2 2:3; do
     done
 done
 
-if [[ $SHOWMAP == true ]]; then
+if [[ $SHOWMAP ]]; then
     echo "TEMP SPEED"
     for i in "${!PAIRS[@]}"; do
         echo "$i   ${PAIRS[$i]}"
@@ -110,9 +112,13 @@ trap cleanup SIGHUP SIGINT SIGQUIT SIGFPE SIGKILL SIGTERM
 function cleanup() {
     echo "Exiting, cleaning up."
     if [[ $CHANGEDPM ]]; then
-        echo "Disabling persistance mode."
+        echo "Disabling persistance mode. (Requires root)"
         sudo nvidia-smi --persistence-mode=0 --id="$GPUID" 1> /dev/null
         nvidia-smi > /dev/null
+    fi
+    if [[ $CPDRAW ]]; then
+        echo "Reverting power limit to $CPDRAW. (Requires root)"
+        sudo nvidia-smi --id="$GPUID" -pl $CPDRAW 1> /dev/null
     fi
     if [[ $CHANGEDFS ]]; then
         echo "Enabling automatic fan control."
@@ -139,8 +145,9 @@ if [[ $POWER ]]; then
     fi
     MIPDRAW=$(echo "$PDRAW" | grep "Min Power Limit" | cut -d: -f2 | grep -Po "^\s*\d+" | xargs)
     MAPDRAW=$(echo "$PDRAW" | grep "Max Power Limit" | cut -d: -f2 | grep -Po "^\s*\d+" | xargs)
+    CPDRAW=$(echo "$PDRAW" | grep "^\s*Power Limit" | cut -d: -f2 | grep -Po "^\s*\d+" | xargs)
     PDRAW=$(echo "$PDRAW" | grep "Default Power Limit" | cut -d: -f2 | grep -Po "^\s*\d+" | xargs)
-    if [[ -z $MIPDRAW ]] || [[ -z $MAPDRAW ]] || [[ -z $PDRAW ]]; then
+    if [[ -z $MIPDRAW ]] || [[ -z $MAPDRAW ]] || [[ -z $PDRAW ]] || [[ -z $CPDRAW ]]; then
         echo "Error parsing power draw limits from Nvidia GPU!"
         cleanup 1
     elif [[ $POWER -lt 1 ]]; then
