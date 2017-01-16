@@ -19,7 +19,7 @@
     https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 LICENSE
 
-# You can set most of these settings from the command line, like this for example : GPU=1 POWER=60 INTERVAL=3.0 ./nvidia-control.sh
+# You can set most of these settings from the command line, like this for example : GPUID=1 POWER=60 INTERVAL=3.0 ./nvidia-control.sh
 # To make a value empty, set it like this for example: POWER=${POWER:-}
 # To set a negative number, set it like this for example: GCLOCK=${GCLOCK:--30}
 # nvidia-smi require root acces for some commands, to bypass this you can make nvidia-smi not require your password:
