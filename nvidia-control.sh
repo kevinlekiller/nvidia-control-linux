@@ -87,16 +87,16 @@ for PAIR in 0:1 1:2 2:3; do
     LOW=$(echo "$PAIR" | cut -d: -f1)
     HIGH=$(echo "$PAIR" | cut -d: -f2)
     TDIFF0=$(bc -l <<< "$((${SPEED[$HIGH]} - ${SPEED[$LOW]})) / $((${TEMP[$HIGH]} - ${TEMP[$LOW]}))")
-    CURTEMP=${SPEED[$LOW]}
+    CURSPEED=${SPEED[$LOW]}
     for i in $(seq ${TEMP[$LOW]} ${TEMP[$HIGH]}); do
-        if [[ $(round $CURTEMP) -le ${SPEED[$LOW]} ]]; then
+        if [[ $(round $CURSPEED) -le ${SPEED[$LOW]} ]]; then
             PAIRS[$i]=${SPEED[$LOW]}
-        elif [[ $(round $CURTEMP) -ge ${SPEED[$HIGH]} ]]; then
+        elif [[ $(round $CURSPEED) -ge ${SPEED[$HIGH]} ]]; then
             PAIRS[$i]=${SPEED[$HIGH]}
         else
-            PAIRS[$i]=$(round $CURTEMP)
+            PAIRS[$i]=$(round $CURSPEED)
         fi
-        CURTEMP=$(bc -l <<< "$TDIFF0 + $CURTEMP")
+        CURSPEED=$(bc -l <<< "$TDIFF0 + $CURSPEED")
     done
 done
 
