@@ -77,32 +77,31 @@ SPEED[3]=100
 SAFESPEED=${SPEED[1]}
 
 ############################################################################################
+function round() {
+    echo "$1" | awk '{print int($1+0.5)}'
+}
 declare -A PAIRS
 for PAIR in 0:1 1:2 2:3; do
     LOW=$(echo "$PAIR" | cut -d: -f1)
     HIGH=$(echo "$PAIR" | cut -d: -f2)
-    # Due to truncating this is not precise.
-    TDIFF0=$(($((${SPEED[$HIGH]} - ${SPEED[$LOW]})) / $((${TEMP[$HIGH]} - ${TEMP[$LOW]}))))
-    TDIFF1=$(($TDIFF0 + ${SPEED[$LOW]}))
+    TDIFF0=$(bc -l <<< "$((${SPEED[$HIGH]} - ${SPEED[$LOW]})) / $((${TEMP[$HIGH]} - ${TEMP[$LOW]}))")
+    CURTEMP=${SPEED[$LOW]}
     for i in $(seq ${TEMP[$LOW]} ${TEMP[$HIGH]}); do
-        if [[ $i == ${TEMP[$LOW]} ]]; then
+        if [[ $(round $CURTEMP) -le ${SPEED[$LOW]} ]]; then
             PAIRS[$i]=${SPEED[$LOW]}
-        elif [[ $i == ${TEMP[$HIGH]} ]]; then
-            PAIRS[$i]=${SPEED[$HIGH]}
-        elif [[ $TDIFF1 -le ${SPEED[$LOW]} ]]; then
-            PAIRS[$i]=${SPEED[$LOW]}
-        elif [[ $TDIFF1 -ge ${SPEED[$HIGH]} ]]; then
+        elif [[ $(round $CURTEMP) -ge ${SPEED[$HIGH]} ]]; then
             PAIRS[$i]=${SPEED[$HIGH]}
         else
-            PAIRS[$i]=$TDIFF1
+            PAIRS[$i]=$(round $CURTEMP)
         fi
-        TDIFF1=$(($TDIFF1 + $TDIFF0))
+        CURTEMP=$(bc -l <<< "$TDIFF0 + $CURTEMP")
     done
 done
 
 if [[ $SHOWMAP == true ]]; then
+    echo "TEMP SPEED"
     for i in "${!PAIRS[@]}"; do
-        echo $i ${PAIRS[$i]}
+        echo "$i   ${PAIRS[$i]}"
     done | sort -n
     exit
 fi
