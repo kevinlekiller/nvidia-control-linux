@@ -19,6 +19,9 @@
     https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 LICENSE
 
+# Some features of this script require the nvidia xorg setting "coolbits" to have a certain value, 28 should be enough to cover all
+# the features in this script, you can read more about "coolbits" in the Nvidia driver README.
+
 # You can set most of these settings from the command line, like this for example : GPUID=1 POWER=60 INTERVAL=3.0 ./nvidia-control.sh
 # To make a value empty, set it like this for example: POWER=${POWER:-}
 # To set a negative number, set it like this for example: GCLOCK=${GCLOCK:--30}
