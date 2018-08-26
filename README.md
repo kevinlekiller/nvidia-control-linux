@@ -6,6 +6,7 @@ Bash script to control clock speed, memory speed, power limit, user defined auto
 Requires [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface), [nvidia-settings](https://github.com/NVIDIA/nvidia-settings), [bc](https://www.gnu.org/software/bc/), [coreutils](https://www.gnu.org/software/coreutils/coreutils.html).
 
 Donation addresses:  
-BTC: 17cMHRkoRyCmixEMoWuudhXzFimYe9r49k  
-ETH: 0x5B06DC68dBD806869B115ef18668F66520c06698  
-XMR: 485KKqeDHk9QcsCw5rpL9L6DymkV3Ph69jGxogSzX1QAccFxqCqJ1UtDXac2SA3taNB9DJSWqCDNcTdAkuhnaExfDd6Acmm
+Bitcoin: 38XZrqgXc9sE2YnWtfXz8QFf9XnDND3RKm  
+Ethereum: 0x36374ea9cC3B33BCC9267be9e18a81AABAf98bEf  
+Litecoin: MM49Vu3jQ1S8b8H9FrCJ1wgQHKSBidwtWZ  
+Zcash: t1YUxEy9R2j9FW3ci3HWyKZEVUvdH5nyDAW
