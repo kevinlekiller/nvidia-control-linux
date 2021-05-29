@@ -35,10 +35,11 @@ LICENSE
 GPUID=${GPUID:-0}
 
 # Set the GPU in its highest P-State. Any value will work. Leave empty to disable.
+# For example, setting this to true will force the GPU to its highest P-State.
 POWERMIZER=${POWERMIZER:-}
 
 # Set the power limit of the GPU. Leave empty to disable.
-# For example, if you set thit to 50, and your GPU's max power draw limit is 200 watts,
+# For example, if you set this to 50, and your GPU's max power draw limit is 200 watts,
 # this will limit the GPU to 100 watts.
 POWER=${POWER:-}
 
@@ -64,6 +65,7 @@ SHOWMAP=${SHOWMAP:-}
 SHOWCURRENT=${SHOWCURRENT:-}
 
 # Set the LED brightness in percentage (assuming your card has LED's). Can be a number between 0 and 100. Leave empty to keep the default brightness.
+# For example, setting this to 0 will disable the LED's.
 LEDPERCENT=${LEDPERCENT:-}
 
 # Set fan speed to this speed if GPU temperature under TEMP[0]
