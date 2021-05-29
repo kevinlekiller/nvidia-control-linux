@@ -1,7 +1,7 @@
 #!/bin/bash
 
-<<LICENSE
-    Copyright (C) 2017  kevinlekiller
+cat > /dev/nul <<LICENSE
+    Copyright (C) 2017-2021  kevinlekiller
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -22,19 +22,24 @@ LICENSE
 # Some features of this script require the nvidia xorg setting "coolbits" to have a certain value, 28 should be enough to cover all
 # the features in this script, you can read more about "coolbits" in the Nvidia driver README.
 
-# You can set most of these settings from the command line, like this for example : GPUID=1 POWER=60 INTERVAL=3.0 ./nvidia-control.sh
-# To make a value empty, set it like this for example: POWER=${POWER:-}
-# To set a negative number, set it like this for example: GCLOCK=${GCLOCK:--30}
 # nvidia-smi require root access for some commands, to bypass this you can make nvidia-smi not require your password:
-# sudo echo "$USER ALL = NOPASSWD: /usr/bin/nvidia-smi" >> /etc/sudoers
+# sudo bash -c "echo $USER ALL = NOPASSWD: /usr/bin/nvidia-smi >> /etc/sudoers"
+
+# You can set most of these settings from the command line, like this for example : GPUID=1 POWER=60 INTERVAL=3.0 ./nvidia-control.sh
+
+# For the settings below:
+# To make a value empty, set it like this POWER=${POWER:-}
+# To set a negative number, set it like this: GCLOCK=${GCLOCK:--30}
 
 # Which GPU to use. find with nvidia-smi -L
 GPUID=${GPUID:-0}
 
-# Set the GPU in its highest P-State. Leave empty to disable.
+# Set the GPU in its highest P-State. Any value will work. Leave empty to disable.
 POWERMIZER=${POWERMIZER:-}
 
 # Set the power limit of the GPU. Leave empty to disable.
+# For example, if you set thit to 50, and your GPU's max power draw limit is 200 watts,
+# this will limit the GPU to 100 watts.
 POWER=${POWER:-}
 
 # Set the GPU clock speed offset in MHz (can be a negative number). Leave empty to disable.
@@ -49,19 +54,20 @@ MCLOCK=${MCLOCK:-}
 # Usually only the highest P-State can be changed. You can find the perf levels for your card with: nvidia-settings -q GPUPerfModes
 PSTATE=${PSTATE:-3}
 
-# How many seconds to wait before checking temps / setting fan speeds. Lower values mean higher CPU usage. Leave empty to disable fan control.
+# How many seconds to wait before checking temps / setting fan speeds. Lower values mean higher CPU usage. Set it empty to disable fan control.
 INTERVAL=${INTERVAL:-5.0}
 
-# Show the temp to speed map then exit. Leave empty to disable.
+# Show the temp to speed map then exit. Any value will work. Leave empty to disable.
 SHOWMAP=${SHOWMAP:-}
 
-# Show the current speed / temp. Leave empty to disable.
+# Show the current speed / temp when controlling the fan. Leave empty to disable.
 SHOWCURRENT=${SHOWCURRENT:-}
 
 # Set the LED brightness in percentage (assuming your card has LED's). Can be a number between 0 and 100. Leave empty to keep the default brightness.
 LEDPERCENT=${LEDPERCENT:-}
 
 # Set fan speed to this speed if GPU temperature under TEMP[0]
+# If set to 0, the fan is stopped.
 MINSPEED=0
 
 # What fan speed to set at what temperature, for example set the fan speed at 25% when GPU temp is 50 degrees.
@@ -109,7 +115,7 @@ if [[ $SHOWMAP ]]; then
     exit
 fi
 
-trap cleanup SIGHUP SIGINT SIGQUIT SIGFPE SIGKILL SIGTERM
+trap cleanup SIGHUP SIGINT SIGQUIT SIGFPE SIGTERM
 function cleanup() {
     echo "Exiting, cleaning up."
     if [[ $CHANGEDPM ]]; then
@@ -119,7 +125,7 @@ function cleanup() {
     fi
     if [[ $CPDRAW ]]; then
         echo "Reverting power limit to $CPDRAW. (Requires root)"
-        sudo nvidia-smi --id="$GPUID" -pl $CPDRAW 1> /dev/null
+        sudo nvidia-smi --id="$GPUID" -pl "$CPDRAW" 1> /dev/null
     fi
     if [[ $CHANGEDFS ]]; then
         echo "Enabling automatic fan control."
@@ -132,7 +138,7 @@ function cleanup() {
     if [[ -z $1 ]]; then
         exit
     fi
-    exit $1
+    exit "$1"
 }
 
 if [[ $POWER ]]; then
@@ -164,7 +170,7 @@ if [[ $POWER ]]; then
         WPDRAW=$MIPDRAW
     fi
     echo "Setting power limit to ${POWER}% (${WPDRAW} watts). (Requires root)"
-    sudo nvidia-smi --id="$GPUID" -pl $WPDRAW 1> /dev/null
+    sudo nvidia-smi --id="$GPUID" -pl "$WPDRAW" 1> /dev/null
 fi
 
 if [[ $POWERMIZER ]]; then
@@ -174,37 +180,37 @@ fi
 
 if [[ $GCLOCK ]]; then
     echo "Setting GPU clock offset to $GCLOCK."
-    nvidia-settings --assign [gpu:$GPUID]/GPUGraphicsClockOffset[$PSTATE]=$GCLOCK 1> /dev/null
+    nvidia-settings --assign [gpu:$GPUID]/GPUGraphicsClockOffset["$PSTATE"]="$GCLOCK" 1> /dev/null
 fi
 
 if [[ $MCLOCK ]]; then
     echo "Setting GPU memory offset to $MCLOCK."
-    nvidia-settings --assign [gpu:$GPUID]/GPUMemoryTransferRateOffset[$PSTATE]=$MCLOCK 1> /dev/null
+    nvidia-settings --assign [gpu:$GPUID]/GPUMemoryTransferRateOffset["$PSTATE"]="$MCLOCK" 1> /dev/null
 fi
 
 if [[ $LEDPERCENT ]] && [[ $LEDPERCENT -ge 0 ]] && [[ $LEDPERCENT -le 100 ]]; then
     echo "Setting LED brightness to $LEDPERCENT percent."
-    nvidia-settings --assign [gpu:$GPUID]/GPULogoBrightness=$LEDPERCENT 1> /dev/null
+    nvidia-settings --assign [gpu:$GPUID]/GPULogoBrightness="$LEDPERCENT" 1> /dev/null
 fi
 
 if [[ $INTERVAL ]]; then
     CHANGEDFS=1
-    while [[ true ]]; do
-        CTEMP=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader --id=$GPUID)
+    while true; do
+        CTEMP=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader --id="$GPUID")
         if [[ $CTEMP -lt ${TEMP[0]} ]]; then
-            SPEED=$MINSPEED
+            CSPEED=$MINSPEED
         elif [[ $CTEMP -ge ${TEMP[3]} ]]; then
-            SPEED=${SPEED[3]}
-        elif [[ ! -z ${PAIRS[$CTEMP]} ]]; then
-            SPEED=${PAIRS[$CTEMP]}
+            CSPEED=${SPEED[3]}
+        elif [[ -n ${PAIRS[$CTEMP]} ]]; then
+            CSPEED=${PAIRS[$CTEMP]}
         else
-            SPEED=$SAFESPEED
+            CSPEED=$SAFESPEED
         fi
         if [[ $SHOWCURRENT ]]; then
-            echo -ne "\033[2KCurrent Temp: $CTEMP Speed: $SPEED\r"
+            echo -ne "\033[2KCurrent Temp: $CTEMP Speed: $CSPEED\r"
         fi
-        nvidia-settings --assign [gpu:$GPUID]/GPUFanControlState=1 --assign [fan:$GPUID]/GPUTargetFanSpeed=$SPEED 1> /dev/null
-        sleep $INTERVAL
+        nvidia-settings --assign [gpu:$GPUID]/GPUFanControlState=1 --assign [fan:$GPUID]/GPUTargetFanSpeed=$CSPEED 1> /dev/null
+        sleep "$INTERVAL"
     done
     if [[ $SHOWCURRENT ]]; then
         echo
