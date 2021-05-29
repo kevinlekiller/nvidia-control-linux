@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat > /dev/nul <<LICENSE
+cat > /dev/null <<LICENSE
     Copyright (C) 2017-2021  kevinlekiller
     
     This program is free software; you can redistribute it and/or
