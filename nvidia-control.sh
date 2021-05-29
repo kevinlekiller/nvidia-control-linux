@@ -38,7 +38,7 @@ GPUID=${GPUID:-0}
 # For example, setting this to true will force the GPU to its highest P-State.
 POWERMIZER=${POWERMIZER:-}
 
-# Set the power limit of the GPU. Leave empty to disable.
+# Set the power limit (percentage, can be higher than 100) of the GPU. Leave empty to disable.
 # For example, if you set this to 50, and your GPU's max power draw limit is 200 watts,
 # this will limit the GPU to 100 watts.
 POWER=${POWER:-}
